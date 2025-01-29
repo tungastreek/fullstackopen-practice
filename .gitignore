@@ -13,5 +13,3 @@ stats.html
 .eslintcache
 
 .DS_Store
-
-**/db.json
