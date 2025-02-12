@@ -1,65 +1,65 @@
-import { useEffect, useState } from 'react'
-import noteService from './services/notes'
+import { useEffect, useState } from 'react';
+import noteService from './services/notes';
 
-import Note from './components/Note'
-import Notification from './components/Notification'
-import Footer from './components/Footer'
+import Note from './components/Note';
+import Notification from './components/Notification';
+import Footer from './components/Footer';
 
 const App = () => {
-  const [notes, setNotes] = useState([])
-  const [newNote, setNewNote] = useState('')
-  const [showAll, setShowAll] = useState(true)
-  const [errorMsg, setErrorMsg] = useState('Some error has happened...')
+  const [notes, setNotes] = useState([]);
+  const [newNote, setNewNote] = useState('');
+  const [showAll, setShowAll] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('Some error has happened...');
 
   const fetchNoteHook = () => {
     noteService
       .getAll()
       .then(response => {
-        setNotes(response)
-      })
-  }
+        setNotes(response);
+      });
+  };
 
-  useEffect(fetchNoteHook, [])
-  useEffect(() => { 
-    setTimeout(() => setErrorMsg(null), 5000)
-  }, [])
+  useEffect(fetchNoteHook, []);
+  useEffect(() => {
+    setTimeout(() => setErrorMsg(null), 5000);
+  }, []);
 
   const addNote = (e) => {
-    e.preventDefault()
+    e.preventDefault();
     const newNoteObject = {
       content: newNote,
       important: Math.random() < 0.5,
-    }
+    };
     noteService
       .create(newNoteObject)
       .then(returnedNotes => {
-        setNotes(notes.concat(returnedNotes))
-        setNewNote('')
-      })
-  }
+        setNotes(notes.concat(returnedNotes));
+        setNewNote('');
+      });
+  };
 
   const handleToggleImportant = (id) => {
-    const note = notes.find(n => n.id === id)
-    const newNote = { ...note, important: !note.important }
+    const note = notes.find(n => n.id === id);
+    const newNote = { ...note, important: !note.important };
     noteService
       .update(id, newNote)
       .then(returnedNote => {
-        setNotes(notes.map(n => n.id === returnedNote.id ? returnedNote : n))
+        setNotes(notes.map(n => n.id === returnedNote.id ? returnedNote : n));
       })
-      .catch(error => {
-        setErrorMsg(`The note: ${note.content} was already deleted from the server`)
-        setTimeout(() => setErrorMsg(null), 5000)
-        setNotes(notes.filter(n => n.id !== id))
-      })
-  }
+      .catch(() => {
+        setErrorMsg(`The note: ${note.content} was already deleted from the server`);
+        setTimeout(() => setErrorMsg(null), 5000);
+        setNotes(notes.filter(n => n.id !== id));
+      });
+  };
 
   const handleNoteChange = (e) => {
-    setNewNote(e.target.value)
-  }
+    setNewNote(e.target.value);
+  };
 
   const notesToShow = showAll
     ? notes
-    : notes.filter(note => note.important)
+    : notes.filter(note => note.important);
 
   return (
     <div>
@@ -86,7 +86,7 @@ const App = () => {
       </form>
       <Footer />
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;
