@@ -1,10 +1,21 @@
-import axios from 'axios';
-const baseUrl = '/api/notes';
+import axios from "axios";
 
-const getAll = () => axios.get(baseUrl).then(response => response.data);
+const baseUrl = "/api/notes";
+let token = null;
 
-const create = (newNote) => axios.post(baseUrl, newNote).then(response => response.data);
+const setToken = (newToken) => (token = newToken);
 
-const update = (id, newNote) => axios.put(`${baseUrl}/${id}`, newNote).then(response => response.data);
+const getAll = () => axios.get(baseUrl).then((response) => response.data);
 
-export default { getAll, create, update };
+const create = async (newNote) => {
+  const config = {
+    headers: { Authorization: `Bearer ${token}` },
+  };
+  const response = await axios.post(baseUrl, newNote, config);
+  return response.data;
+};
+
+const update = (id, newNote) =>
+  axios.put(`${baseUrl}/${id}`, newNote).then((response) => response.data);
+
+export default { getAll, create, update, setToken };
