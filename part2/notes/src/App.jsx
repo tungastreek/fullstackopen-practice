@@ -32,7 +32,7 @@ const App = () => {
     try {
       const user = await loginService.login(payload);
       setUser(user);
-      noteService.setToken(user.token);
+      noteService.setAuthorizationWithToken(user.token);
     } catch (error) {
       setErrorMsg("Wrong credentials");
       setTimeout(() => setErrorMsg(null), 5000);
@@ -50,18 +50,18 @@ const App = () => {
     try {
       const returnedNote = await noteService.create(newNoteObject);
       setNotes(notes.concat(returnedNote));
-      setNewNote("");
     } catch (error) {
       setErrorMsg(`The note could not be saved: ${error.response.statusText}`);
       setTimeout(() => setErrorMsg(null), 5000);
     }
+    setNewNote("");
   };
 
   const handleToggleImportant = (id) => {
     const note = notes.find((n) => n.id === id);
-    const newNote = { ...note, important: !note.important };
+    const updateNote = { content: note.content, important: !note.important };
     noteService
-      .update(id, newNote)
+      .update(id, updateNote)
       .then((returnedNote) => {
         setNotes(
           notes.map((n) => (n.id === returnedNote.id ? returnedNote : n))
