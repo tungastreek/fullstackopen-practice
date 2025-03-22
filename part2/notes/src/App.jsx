@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import loginService from './services/login';
 import noteService from './services/notes';
 
@@ -8,6 +8,7 @@ import Notification from './components/Notification';
 import LoginForm from './components/LoginForm';
 import Tooglable from './components/utils/Togglable';
 import NoteForm from './components/NoteForm';
+import UserProfile from './components/UserProfile';
 
 const App = () => {
   /*
@@ -30,6 +31,11 @@ const App = () => {
   const [notes, setNotes] = useState([]);
   const [showAllNotes, setShowAllNotes] = useState(true);
   const [message, setMessage] = useState(null);
+
+  /*
+   * Reference variables of the component
+   */
+  const noteFormRef = useRef();
 
   /*
    * Effects of the component
@@ -68,11 +74,19 @@ const App = () => {
     }
   };
 
+  const logout = () => {
+    window.localStorage.removeItem(loggedInUserKey);
+    setUser(null);
+    noteService.setAuthorizationWithToken(null);
+    showMessage({ text: 'Logged out successfully', type: 'success' });
+  };
+
   const addNote = async (newNoteObject) => {
     try {
       const returnedNote = await noteService.create(newNoteObject);
       setNotes(notes.concat(returnedNote));
       showMessage({ text: `Note: ${returnedNote.content} added`, type: 'success' });
+      noteFormRef.current.handleToggle();
     } catch (error) {
       showMessage({ text: error.response.statusText, type: 'error' });
     }
@@ -109,9 +123,12 @@ const App = () => {
 
   const addNoteForm = () => {
     return (
-      <Tooglable buttonLabel='Add Note'>
-        <NoteForm addNote={addNote} />
-      </Tooglable>
+      <>
+        <UserProfile user={user} logout={logout} />
+        <Tooglable buttonLabel='Add Note' ref={noteFormRef}>
+          <NoteForm addNote={addNote} />
+        </Tooglable>
+      </>
     );
   };
 

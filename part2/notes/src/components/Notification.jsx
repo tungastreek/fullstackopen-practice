@@ -1,5 +1,5 @@
-const Notification = ({ message }) => {
-  return <div className={`notification ${message.type}`}>{message.text}</div>;
-};
+const Notification = ({ message }) => (
+  <div className={`notification ${message.type}`}>{message.text}</div>
+);
 
 export default Notification;
