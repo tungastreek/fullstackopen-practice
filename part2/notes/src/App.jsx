@@ -7,6 +7,9 @@ import Note from './components/Note';
 import Notification from './components/Notification';
 
 const App = () => {
+  /*
+   * States of the component
+   */
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState(null);
@@ -15,6 +18,9 @@ const App = () => {
   const [showAll, setShowAll] = useState(true);
   const [errorMsg, setErrorMsg] = useState('Some error has happened...');
 
+  /*
+   * Effects of the component
+   */
   const fetchLoggedInUser = () => {
     const loggedUserJSON = window.localStorage.getItem('loggedNoteAppUser');
     if (loggedUserJSON) {
@@ -36,6 +42,9 @@ const App = () => {
     setTimeout(() => setErrorMsg(null), 5000);
   }, []);
 
+  /*
+   * Event handlers
+   */
   const handleLogin = async (e) => {
     e.preventDefault();
     const payload = { username, password };
@@ -77,12 +86,14 @@ const App = () => {
         setNotes(notes.map((n) => (n.id === returnedNote.id ? returnedNote : n)));
       })
       .catch(() => {
-        setErrorMsg(`The note: ${note.content} was already deleted from the server`);
+        setErrorMsg(`The note: ${note.content} cannot be updated by current user`);
         setTimeout(() => setErrorMsg(null), 5000);
-        setNotes(notes.filter((n) => n.id !== id));
       });
   };
 
+  /*
+   * Render the component
+   */
   const notesToShow = showAll ? notes : notes.filter((note) => note.important);
 
   const loginForm = () => {
