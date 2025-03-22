@@ -5,24 +5,37 @@ import noteService from './services/notes';
 import Footer from './components/Footer';
 import Note from './components/Note';
 import Notification from './components/Notification';
+import LoginForm from './components/LoginForm';
+import Tooglable from './components/utils/Togglable';
+import NoteForm from './components/NoteForm';
 
 const App = () => {
   /*
+   * Constants of the component
+   */
+  const loggedInUserKey = 'loggedNoteAppUser';
+
+  /*
+   * Helper functions of the component
+   */
+  const showMessage = ({ text, type }) => {
+    setMessage({ text, type });
+    setTimeout(() => setMessage(null), 5000);
+  };
+
+  /*
    * States of the component
    */
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [user, setUser] = useState(null);
   const [notes, setNotes] = useState([]);
-  const [newNote, setNewNote] = useState('');
-  const [showAll, setShowAll] = useState(true);
-  const [errorMsg, setErrorMsg] = useState('Some error has happened...');
+  const [showAllNotes, setShowAllNotes] = useState(true);
+  const [message, setMessage] = useState(null);
 
   /*
    * Effects of the component
    */
   const fetchLoggedInUser = () => {
-    const loggedUserJSON = window.localStorage.getItem('loggedNoteAppUser');
+    const loggedUserJSON = window.localStorage.getItem(loggedInUserKey);
     if (loggedUserJSON) {
       const user = JSON.parse(loggedUserJSON);
       setUser(user);
@@ -38,112 +51,80 @@ const App = () => {
 
   useEffect(fetchLoggedInUser, []);
   useEffect(fetchNoteHook, []);
-  useEffect(() => {
-    setTimeout(() => setErrorMsg(null), 5000);
-  }, []);
 
   /*
    * Event handlers
    */
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const login = async ({ username, password }) => {
     const payload = { username, password };
     try {
       const user = await loginService.login(payload);
-      window.localStorage.setItem('loggedNoteAppUser', JSON.stringify(user));
+      window.localStorage.setItem(loggedInUserKey, JSON.stringify(user));
       setUser(user);
       noteService.setAuthorizationWithToken(user.token);
+      showMessage({ text: 'Logged in successfully', type: 'success' });
     } catch (error) {
-      setErrorMsg(`Cannot login: ${error.response.statusText}`);
-      setTimeout(() => setErrorMsg(null), 5000);
+      showMessage({ text: error.response.statusText, type: 'error' });
     }
-    setUsername('');
-    setPassword('');
   };
 
-  const addNote = async (e) => {
-    e.preventDefault();
-    const newNoteObject = {
-      content: newNote,
-      important: Math.random() < 0.5,
-    };
+  const addNote = async (newNoteObject) => {
     try {
       const returnedNote = await noteService.create(newNoteObject);
       setNotes(notes.concat(returnedNote));
+      showMessage({ text: `Note: ${returnedNote.content} added`, type: 'success' });
     } catch (error) {
-      setErrorMsg(`The note could not be saved: ${error.response.statusText}`);
-      setTimeout(() => setErrorMsg(null), 5000);
+      showMessage({ text: error.response.statusText, type: 'error' });
     }
-    setNewNote('');
   };
 
-  const handleToggleImportant = (id) => {
+  const handleToggleImportant = async (id) => {
     const note = notes.find((n) => n.id === id);
     const updateNote = { content: note.content, important: !note.important };
-    noteService
-      .update(id, updateNote)
-      .then((returnedNote) => {
-        setNotes(notes.map((n) => (n.id === returnedNote.id ? returnedNote : n)));
-      })
-      .catch(() => {
-        setErrorMsg(`The note: ${note.content} cannot be updated by current user`);
-        setTimeout(() => setErrorMsg(null), 5000);
+
+    try {
+      const returnedNote = await noteService.update(id, updateNote);
+      setNotes(notes.map((n) => (n.id === returnedNote.id ? returnedNote : n)));
+      showMessage({ text: `Note: ${returnedNote.content} updated`, type: 'success' });
+    } catch {
+      showMessage({
+        text: `The note: ${note.content} cannot be updated by current user`,
+        type: 'error',
       });
+    }
   };
 
   /*
    * Render the component
    */
-  const notesToShow = showAll ? notes : notes.filter((note) => note.important);
+  const notesToShow = showAllNotes ? notes : notes.filter((note) => note.important);
 
   const loginForm = () => {
     return (
-      <div>
-        <h2>Please login</h2>
-        <form onSubmit={handleLogin}>
-          <label htmlFor='username'>Username: </label>
-          <input
-            id='username'
-            type='text'
-            value={username}
-            onChange={({ target }) => setUsername(target.value)}
-          />
-          <br />
-          <label htmlFor='password'>Password: </label>
-          <input
-            id='password'
-            type='password'
-            value={password}
-            onChange={({ target }) => setPassword(target.value)}
-          />
-          <br />
-          <button type='submit'>Login</button>
-        </form>
-      </div>
+      <Tooglable buttonLabel='Login'>
+        <LoginForm login={login} />
+      </Tooglable>
     );
   };
 
   const addNoteForm = () => {
     return (
-      <div>
-        <h2>Add a new note</h2>
-        <form onSubmit={addNote}>
-          <input value={newNote} onChange={({ target }) => setNewNote(target.value)} />
-          <br />
-          <button type='submit'>Save</button>
-        </form>
-      </div>
+      <Tooglable buttonLabel='Add Note'>
+        <NoteForm addNote={addNote} />
+      </Tooglable>
     );
   };
 
   return (
     <div>
       <h1>Notes</h1>
-      <Notification message={errorMsg} />
+      {message && <Notification message={message} />}
       {user === null ? loginForm() : addNoteForm()}
       <div>
         <h2>All notes</h2>
-        <button onClick={() => setShowAll(!showAll)}>Show {showAll ? 'Important' : 'All'}</button>
+        <button onClick={() => setShowAllNotes(!showAllNotes)}>
+          Show {showAllNotes ? 'Important' : 'All'}
+        </button>
       </div>
       <ul>
         {notesToShow.map((note) => (
